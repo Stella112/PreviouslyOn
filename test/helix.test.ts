@@ -1,0 +1,7 @@
+import {describe,it,expect,vi} from 'vitest';
+import {HelixClient} from '../src/twitch/helix.js';
+describe('Helix client',()=>{
+ it('refreshes once on 401 and uses the new token',async()=>{let token='old'; const fetcher=vi.fn().mockResolvedValueOnce(new Response('',{status:401})).mockResolvedValueOnce(new Response('{}')); const refresh=vi.fn(async()=>{token='new';}); const c=new HelixClient({clientId:'id',getAccessToken:()=>token,refresh,fetcher}); expect((await c.request('/test')).status).toBe(200); expect(refresh).toHaveBeenCalledTimes(1); expect(new Headers(fetcher.mock.calls[1][1].headers).get('Authorization')).toBe('Bearer new');});
+ it('respects rate limit reset and backs off on server errors',async()=>{const fetcher=vi.fn().mockResolvedValueOnce(new Response('',{status:429,headers:{'Ratelimit-Reset':'12'}})).mockResolvedValueOnce(new Response('',{status:503})).mockResolvedValueOnce(new Response('{}')); const sleep=vi.fn(async(_ms:number)=>{}); const c=new HelixClient({clientId:'id',getAccessToken:()=> 'x',refresh:async()=>{},fetcher,sleep,now:()=>10000}); await c.request('/test'); expect(sleep.mock.calls.map(c=>c[0])).toEqual([3000,2000]);});
+ it('does not refresh repeatedly',async()=>{const fetcher=vi.fn().mockResolvedValue(new Response('',{status:401})); const refresh=vi.fn(async()=>{}); const c=new HelixClient({clientId:'id',getAccessToken:()=> 'x',refresh,fetcher}); expect((await c.request('/test')).status).toBe(401); expect(refresh).toHaveBeenCalledTimes(1);});
+});
