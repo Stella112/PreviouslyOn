@@ -1,1 +1,1 @@
-{}
+{"moments":{"bucketSeconds":5,"baselineSeconds":300,"baselineFloor":2,"threshold":5,"cooldownSeconds":60,"messageWeight":1,"uniqueWeight":0.5,"emoteWeight":0.5,"hypeWeight":4}}

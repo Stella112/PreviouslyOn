@@ -5,12 +5,14 @@ import { HelixClient } from '../twitch/helix.js';
 import { EventSubClient } from './client.js';
 import { endSession, recordEvent, startSession } from './store.js';
 import type { NormalizedEvent } from './messages.js';
+import { ingestMomentEvent, recentMoments } from '../moments/runtime.js';
 const feed: NormalizedEvent[]=[]; const listeners=new Set<(data:unknown)=>void>();
 let status='Not connected'; let client:EventSubClient | undefined;
 const publish=()=>{ for(const listener of listeners) listener(snapshot()); };
-export function snapshot() { return {status, events:feed.slice(-50).reverse(), simulated:process.env.DEMO === '1'}; }
+setInterval(publish,5000).unref();
+export function snapshot() { return {status, events:feed.slice(-50).reverse(), moments:recentMoments(), simulated:process.env.DEMO === '1'}; }
 export function listen(listener:(data:unknown)=>void):()=>void { listeners.add(listener); listener(snapshot()); return ()=>listeners.delete(listener); }
-export function addEvent(e:NormalizedEvent): void { if (!recordEvent(e)) return; feed.push(e); if (feed.length>50) feed.shift(); publish(); }
+export function addEvent(e:NormalizedEvent): void { if (!recordEvent(e)) return; ingestMomentEvent(e); feed.push(e); if (feed.length>50) feed.shift(); publish(); }
 export async function startEventSub(): Promise<void> {
  if (process.env.DEMO === '1') { status='SIMULATED'; publish(); return; }
  const token=getToken(); if (!token) { status='Log in to connect EventSub'; publish(); return; }

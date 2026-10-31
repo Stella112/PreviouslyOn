@@ -1,0 +1,1 @@
+{"events":[{"at":0,"type":"channel.chat.message","userId":"a","userName":"Alice","text":"hello","emotes":[]},{"at":10000,"type":"channel.chat.message","userId":"b","userName":"Bee","text":"nice","emotes":[]}],"end":15000,"expected":[]}
