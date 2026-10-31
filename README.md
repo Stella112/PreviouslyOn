@@ -1,6 +1,6 @@
 # Previously On
 
-A local Twitch companion intended to turn stream moments into a TV-style cold open. Phase 1 provides Twitch OAuth and a status page; the recap experience is not built yet.
+A local Twitch companion intended to turn stream moments into a TV-style cold open. The current build connects Twitch OAuth and EventSub to a live status feed; the recap experience is not built yet.
 
 ## Setup
 
@@ -10,8 +10,8 @@ Run `npm run dev`, then open `http://localhost:3000/status` and connect Twitch. 
 
 Scopes: `user:read:chat` (chat events), `user:write:chat` (send), `clips:edit` (create clips), `channel:manage:clips` (download and VOD clips), `moderator:manage:chat_messages` (pin), and `moderator:read:followers` (follows). Chat subscription notifications use `user:read:chat`; no subscription-read scope is needed for the planned EventSub type.
 
-Commands: `npm test`, `npm run typecheck`, `npm run build`, `npm start`. `npm run demo` starts the server with DEMO=1, but simulation is not implemented yet. `OPENAI_API_KEY` and `OPENAI_MODEL` are reserved for future caption generation.
+Commands: `npm test`, `npm run typecheck`, `npm run build`, `npm start`. `npm run demo` starts a simulated event feed without connecting to Twitch; all simulated events are labeled. The demo has simulated online/offline buttons. `OPENAI_API_KEY` and `OPENAI_MODEL` are reserved for future caption generation. Stop the running server before switching modes.
 
 ## How Codex was used
 
-Codex is implementing this project in phases in collaboration with the product owner. Phase 1 scaffolds the server, OAuth and mocked tests. No live Twitch verification has been performed yet.
+Codex is implementing this project in phases in collaboration with the product owner. Phase 1 added server and OAuth; Phase 2 adds EventSub, a status feed, simulated events, and mocked reconnection tests. Twitch login and EventSub subscription creation have been exercised live. Chat delivery is awaiting the live gate.
