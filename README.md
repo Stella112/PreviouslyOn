@@ -1,6 +1,6 @@
 # Previously On
 
-A local Twitch companion intended to turn stream moments into a TV-style cold open. The current build connects Twitch OAuth and EventSub to a live status feed and detects moments during live sessions; clips and the recap experience are not built yet.
+A local Twitch companion intended to turn stream moments into a TV-style cold open. The current build connects Twitch OAuth and EventSub, detects moments, and attempts to capture and download Twitch clips. The recap experience is not built yet.
 
 ## Setup
 
@@ -12,8 +12,10 @@ Scopes: `user:read:chat` (chat events), `user:write:chat` (send), `clips:edit` (
 
 Commands: `npm test`, `npm run typecheck`, `npm run build`, `npm start`. `npm run demo` starts a simulated event feed without connecting to Twitch; all simulated events are labeled. The demo has simulated online/offline buttons. `OPENAI_API_KEY` and `OPENAI_MODEL` are reserved for future caption generation. Stop the running server before switching modes.
 
-Moment detection uses five-second buckets and the thresholds and weights in `config.json`. While live, viewers can nominate with `!banger`, or the broadcaster can use Mark moment on the status page. Moment detection has not yet been verified during a real stream; demo events currently exercise only the event feed.
+Moment detection uses five-second buckets and the thresholds and weights in `config.json`. While live, viewers can nominate with `!banger`, or the broadcaster can use Mark moment on the status page. New moments enqueue Twitch clip creation, poll for up to 60 seconds per attempt, and retry once. After a stream ends, session clips are imported. Downloaded files are stored in `data/media`. Twitch clips must be enabled in the broadcaster's Creator Dashboard. Real clip creation and downloads have not yet been verified live.
+
+In demo mode, use SIMULATED online and Mark moment on the status page to create a simulated moment tied to the bundled synthetic sample video. The server-side helpers for local MP4 attachment and VOD recapture are not yet exposed in Studio.
 
 ## How Codex was used
 
-Codex is implementing this project in phases in collaboration with the product owner. Phase 1 added server and OAuth; Phase 2 added EventSub, a status feed, simulated events, and mocked reconnection tests; Phase 3 adds a fixture-tested moment engine. Twitch login, EventSub subscriptions, and chat message delivery have been exercised live.
+Codex is implementing this project in phases in collaboration with the product owner. Phase 1 added server and OAuth; Phase 2 added EventSub, a status feed, simulated events, and mocked reconnection tests; Phase 3 added a fixture-tested moment engine; Phase 4 adds clip creation, polling, import and download. Twitch login, EventSub subscriptions, and chat message delivery have been exercised live.
