@@ -16,7 +16,13 @@ Moment detection uses five-second buckets and the thresholds and weights in `con
 
 In demo mode, use SIMULATED online and Mark moment on the status page, then SIMULATED offline to create a draft tied to the bundled synthetic sample video. Studio offers VOD re-clipping when the clip has a VOD offset; local MP4 attachment is currently a server-side helper only.
 
-Open `http://localhost:3000/studio` to select an episode, edit title, teaser, trims, captions and credits, reorder or swap moments, preview, save, approve, and arm it. Preview and initial manual playback share a player; automatic triggers and final overlay styling are in progress. Recap link posting is not implemented yet. Demo mode uses a separate SQLite database.
+Open `http://localhost:3000/studio` to select an episode, edit title, teaser, trims, captions and credits, reorder or swap moments, preview, save, approve, and arm it. Play on stream and STOP control the browser source. An armed episode plays when a new stream starts after the delay in `config.json`; `!previously` from the broadcaster or a moderator also starts an approved episode. Recap link posting is not implemented yet. Demo mode uses a separate SQLite database.
+
+## OBS setup
+
+In OBS, add a **Browser** source and set its URL to `http://localhost:3000/overlay`, width to **1920**, and height to **1080**. Keep Previously On running. The source is transparent when idle; select an episode in Studio and click Play on stream to test it. Avoid capturing any private information in your source footage. Overlay playback in OBS is awaiting the live gate.
+
+The overlay font is Oswald, distributed under the SIL Open Font License; see `public/assets/fonts/OFL.txt`.
 
 After a live session ends and clips finish importing, a draft is built from up to three playable clips with up to three alternatives. Use Build episode on the status page to retry drafting the most recent completed stream. Clips shorter than seven seconds use their available duration; estimated trims are flagged for review. A key and model in `OPENAI_API_KEY` and `OPENAI_MODEL` enable optional caption selection; otherwise the app uses a fixed caption. Captions are restricted to safe generic templates, and no key is sent to the browser.
 

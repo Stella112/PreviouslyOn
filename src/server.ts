@@ -19,6 +19,7 @@ app.disable('x-powered-by');
 app.use((req,res,next) => { const allowed = [`localhost:${config.port}`,`127.0.0.1:${config.port}`]; if (!allowed.includes(req.headers.host || '')) { res.status(400).send('Invalid host'); return; } res.setHeader('X-Content-Type-Options','nosniff'); next(); });
 app.use('/media',express.static('data/media',{fallthrough:false}));
 app.use('/demo-media',express.static('public/demo-media',{fallthrough:false}));
+app.use('/assets',express.static('public/assets',{fallthrough:false}));
 app.get('/health',(_req,res)=>res.json({ok:true}));
 app.get('/auth/login',(req,res)=>{
  if (req.hostname !== 'localhost') { res.redirect(`http://localhost:${config.port}/auth/login`); return; }
