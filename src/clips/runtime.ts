@@ -34,6 +34,7 @@ export function importSessionClips(sessionId:number):void {
    if(!momentId){const at=Date.parse(clip.created_at);if(!Number.isFinite(at))continue;const row=db.prepare(`INSERT INTO moments (session_id,started_at,peak_at,score,reason,top_emotes_json,sample_messages_json,trigger,status) VALUES (?,?,?,?,?,?,?,?,?)`).run(sessionId,new Date(at-20000).toISOString(),clip.created_at,0,'Imported clip','[]','[]','imported','detected');momentId=Number(row.lastInsertRowid);}
    await saveClip(momentId,clip.created_at,clip);
   }
+  try {const {buildEpisode}=await import('../episodes/store.js');await buildEpisode(sessionId);}catch{console.warn('Episode was not drafted: no playable clips or build failed.');}
  });
 }
 export async function recaptureVod(momentId:number,vodId:string,offset:number,title:string,duration:number):Promise<void> {
