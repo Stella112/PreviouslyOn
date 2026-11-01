@@ -50,6 +50,13 @@ export async function attachLocal(momentId:number,name:string):Promise<void> {
  db.prepare('INSERT INTO clips (moment_id,local_path,source,status) VALUES (?,?,?,?)').run(momentId,path,'local','ready');
  db.prepare('UPDATE moments SET status=? WHERE id=?').run('clipped',momentId);
 }
+export async function retryClipDownload(id:number):Promise<void> {
+ const clip=db.prepare('SELECT id,moment_id,twitch_clip_id FROM clips WHERE id=?').get(id) as {id:number;moment_id:number;twitch_clip_id:string|null}|undefined;
+ if(!clip?.twitch_clip_id)throw new Error('Twitch clip not found');
+ const url=await api().downloadUrl(clip.twitch_clip_id);const path=await downloadMedia(url);
+ db.prepare('UPDATE clips SET local_path=?,status=? WHERE id=?').run(path,'ready',id);
+ db.prepare('UPDATE moments SET status=? WHERE id=?').run('clipped',clip.moment_id);
+}
 setInterval(()=>{
  if(process.env.DEMO==='1' || !getToken()) return;
  enqueue(async()=>{const rows=db.prepare('SELECT twitch_clip_id FROM clips WHERE source=? AND vod_offset IS NULL AND twitch_clip_id IS NOT NULL LIMIT 50').all('twitch') as {twitch_clip_id:string}[];const service=api();for(const row of rows){try{const clip=await service.get(row.twitch_clip_id);if(clip && clip.vod_offset!==null)db.prepare('UPDATE clips SET video_id=?,vod_offset=? WHERE twitch_clip_id=?').run(clip.video_id,clip.vod_offset,clip.id);}catch{console.warn('Could not refresh a clip VOD offset.');}}});

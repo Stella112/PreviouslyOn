@@ -11,7 +11,7 @@ export class ClipsApi {
   do {const q=new URLSearchParams({broadcaster_id:this.userId,started_at:startedAt,ended_at:endedAt,first:'100'});if(cursor)q.set('after',cursor);const r=await this.json<ClipResponse>(`/clips?${q}`);clips.push(...r.data);cursor=r.pagination?.cursor;} while(cursor);
   return clips;
  }
- async downloadUrl(id:string):Promise<string> {const q=new URLSearchParams({broadcaster_id:this.userId,editor_id:this.userId,clip_id:id});const r=await this.json<{data:{landscape_download_url:string|null}[]}>(`/clips/downloads?${q}`);const url=r.data[0]?.landscape_download_url;if(!url)throw new Error('Twitch did not provide a landscape download');return url;}
+ async downloadUrl(id:string):Promise<string> {const q=new URLSearchParams({broadcaster_id:this.userId,editor_id:this.userId,clip_id:id});const r=await this.json<{data:{landscape_download_url:string|null;portrait_download_url:string|null}[]}>(`/clips/downloads?${q}`);const url=r.data[0]?.landscape_download_url ?? r.data[0]?.portrait_download_url;if(!url)throw new Error('Twitch did not provide a clip download');return url;}
  async fromVod(vodId:string,offset:number,title:string,duration:number):Promise<string> {
   if(!vodId || !Number.isInteger(offset) || duration<5 || duration>60 || offset<duration || !title.trim()) throw new Error('Invalid VOD clip parameters');
   const q=new URLSearchParams({broadcaster_id:this.userId,editor_id:this.userId,vod_id:vodId,vod_offset:String(offset),title,duration:String(duration)});

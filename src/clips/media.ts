@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { isMp4 } from './logic.js';
 import { randomUUID } from 'node:crypto';
 export async function downloadMedia(url:string,fetcher:typeof fetch=fetch):Promise<string> {
- const parsed=new URL(url);if(parsed.protocol!=='https:' || parsed.username || parsed.password || parsed.port || !/(^|\.)twitchcdn\.net$/i.test(parsed.hostname)) throw new Error('Untrusted clip download URL');
+ const parsed=new URL(url);if(parsed.protocol!=='https:' || parsed.username || parsed.password || parsed.port || !/(^|\.)(twitchcdn\.net|cloudfront\.net)$/i.test(parsed.hostname)) throw new Error('Untrusted clip download URL');
  const response=await fetcher(url,{redirect:'error'});if(!response.ok || !response.body)throw new Error(`Clip download failed (HTTP ${response.status})`);
  await mkdir('data/media',{recursive:true});const name=`${randomUUID()}.mp4`;const dest=join('data','media',name);const temp=dest+'.part';
  const file=await open(temp,'wx');let size=0;let prefix=Buffer.alloc(0);
