@@ -1,7 +1,7 @@
 window.playEpisode=async function(stage,episode,signal){
  const wait=ms=>new Promise(resolve=>{const timer=setTimeout(resolve,ms);signal.addEventListener('abort',()=>{clearTimeout(timer);resolve()},{once:true})});
  const videos=episode.moments.map(m=>{const v=document.createElement('video');v.preload='auto';v.src=m.localPath;v.playsInline=true;v.load();return v});
- const card=async(text,ms)=>{stage.replaceChildren();const h=document.createElement('h2');h.textContent=text;h.className='show-card';stage.append(h);await wait(ms)};
+ const card=async(text,ms)=>{stage.replaceChildren();const h=document.createElement('h2');h.textContent=text;h.className='show-card';h.style.transition='opacity .4s ease';stage.append(h);await wait(Math.max(0,ms-400));if(!signal.aborted){h.style.opacity='0';await wait(400)}};
  await card(episode.title,3000);if(signal.aborted)return;
  for(let i=0;i<episode.moments.length;i++){
   const m=episode.moments[i];if(signal.aborted)return;stage.replaceChildren();const video=videos[i];const caption=document.createElement('p');caption.textContent=m.caption;if(m.credit){const credit=document.createElement('small');credit.textContent=({called_it:'called it',nominated:'nominated by',picked:'picked by'}[m.credit.kind]||'')+': @'+m.credit.userName;caption.append(credit)}stage.append(video,caption);
