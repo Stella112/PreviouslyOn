@@ -9,6 +9,9 @@ import { demoEvent, startDemo } from './demo/simulator.js';
 import { markMoment } from './moments/runtime.js';
 import { attachLocal, recaptureVod } from './clips/runtime.js';
 import { buildEpisode } from './episodes/store.js';
+import {getEpisode,listEpisodes,saveEpisode,setEpisodeStatus} from './episodes/editor.js';
+import {resolve} from 'node:path';
+import {playEpisode,stopPlayback} from './playback/runtime.js';
 const app = express();
 const states = new Map<string,number>();
 const csrf = randomBytes(32).toString('hex');
@@ -50,8 +53,14 @@ app.post('/api/clips/:momentId/:action',express.json({limit:'2kb'}),async(req,re
   res.sendStatus(204);
  } catch {res.status(400).send('Clip operation failed; check the supplied details and Twitch connection.');}
 });
-app.get('/studio',(_req,res)=>res.type('html').send('<h1>Studio</h1><p>Coming in a later phase.</p>'));
-app.get('/overlay',(_req,res)=>res.type('html').send('<!doctype html><title>Previously On overlay</title>'));
+app.get('/studio',(_req,res)=>res.sendFile(resolve('public/studio/index.html')));
+app.use('/studio-assets',express.static('public/studio',{fallthrough:false}));
+app.get('/api/studio',(_req,res)=>res.json({csrf,simulated:process.env.DEMO==='1',episodes:listEpisodes()}));
+app.get('/api/studio/:id',(req,res)=>{const id=Number(req.params.id);const episode=Number.isSafeInteger(id)?getEpisode(id):undefined;if(!episode){res.sendStatus(404);return;}res.json(episode);});
+app.get('/api/clip-info/:id',(req,res)=>{const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<=0){res.sendStatus(400);return;}const clip=db.prepare('SELECT moment_id,video_id,vod_offset FROM clips WHERE id=?').get(id);if(!clip){res.sendStatus(404);return;}res.json(clip);});
+app.post('/api/studio/:id/:action',express.json({limit:'32kb'}),(req,res)=>{const origin=req.get('origin');if((origin!==`http://localhost:${config.port}` && origin!==`http://127.0.0.1:${config.port}`) || req.get('x-csrf-token')!==csrf){res.sendStatus(403);return;}const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<=0){res.sendStatus(400);return;}const action=req.params.action;const ok=action==='save'?saveEpisode(id,req.body):action==='approve'||action==='arm'?setEpisodeStatus(id,action==='arm'?'armed':'approved'):false;if(!ok){res.status(400).send('Invalid episode or action');return;}res.json(getEpisode(id));});
+app.post('/api/playback/:action',express.json({limit:'1kb'}),(req,res)=>{const origin=req.get('origin');if((origin!==`http://localhost:${config.port}` && origin!==`http://127.0.0.1:${config.port}`)||req.get('x-csrf-token')!==csrf){res.sendStatus(403);return;}if(req.params.action==='stop'){stopPlayback();res.json({ok:true});return;}if(req.params.action==='play'&&Number.isSafeInteger(req.body?.id)&&playEpisode(req.body.id)){res.json({ok:true});return;}res.sendStatus(400);});
+app.get('/overlay',(_req,res)=>res.sendFile(resolve('public/overlay/index.html')));
 if (process.env.DEMO !== '1') await validateSession().catch(()=>console.warn('Could not validate Twitch session at startup.'));
 void startEventSub();
 if (process.env.DEMO === '1') startDemo();

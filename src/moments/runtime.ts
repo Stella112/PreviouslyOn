@@ -19,7 +19,11 @@ function syncSession():boolean {const current=currentSession(); if(current!==ses
 export function ingestMomentEvent(e:NormalizedEvent):void {
  if(e.simulated) {
   if(e.type==='demo.online'){demoLive=true;demoMoments=[];demoEngine.reset();return;}
-  if(e.type==='demo.offline'){demoEngine.advance(Date.parse(e.at)+settings.bucketSeconds*1000);demoLive=false;demoEngine.reset();return;}
+  if(e.type==='demo.offline'){
+   demoEngine.advance(Date.parse(e.at)+settings.bucketSeconds*1000);demoLive=false;demoEngine.reset();
+   if(demoMoments.length){const session=db.prepare('INSERT INTO stream_sessions (twitch_stream_id,started_at,ended_at) VALUES (?,?,?)').run('demo-'+Date.now(),new Date(demoMoments[0].startedAt).toISOString(),e.at);const sid=Number(session.lastInsertRowid);for(const m of demoMoments){const row=db.prepare('INSERT INTO moments (session_id,started_at,peak_at,score,reason,top_emotes_json,sample_messages_json,credit_user,credit_kind,trigger,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(sid,new Date(m.startedAt).toISOString(),new Date(m.peakAt).toISOString(),m.score,'SIMULATED '+m.reason,JSON.stringify(m.topEmotes),JSON.stringify(m.sampleMessages),m.creditUser??null,m.creditKind??null,m.trigger,'clipped');db.prepare('INSERT INTO clips (moment_id,local_path,duration,source,status) VALUES (?,?,?,?,?)').run(Number(row.lastInsertRowid),'public/demo-media/simulated.mp4',8,'demo','ready');}void import('../episodes/store.js').then(({buildEpisode})=>buildEpisode(sid)).catch(()=>console.warn('Simulated episode draft failed.'));}
+   return;
+  }
   if(demoLive) demoEngine.ingest({at:Date.parse(e.at),type:e.type==='demo.chat'||e.type==='demo.emote'?'channel.chat.message':'channel.chat.notification',userId:e.userName,userName:e.userName,text:e.text,emotes:e.emotes,hype:e.type==='demo.raid'||e.type==='demo.follow'});
   return;
  }

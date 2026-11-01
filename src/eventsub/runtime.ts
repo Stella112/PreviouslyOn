@@ -6,11 +6,12 @@ import { EventSubClient } from './client.js';
 import { endSession, recordEvent, startSession } from './store.js';
 import type { NormalizedEvent } from './messages.js';
 import { ingestMomentEvent, recentMoments } from '../moments/runtime.js';
+import {playbackState} from '../playback/runtime.js';
 const feed: NormalizedEvent[]=[]; const listeners=new Set<(data:unknown)=>void>();
 let status='Not connected'; let client:EventSubClient | undefined;
 const publish=()=>{ for(const listener of listeners) listener(snapshot()); };
-setInterval(publish,5000).unref();
-export function snapshot() { return {status, events:feed.slice(-50).reverse(), moments:recentMoments(), simulated:process.env.DEMO === '1'}; }
+setInterval(publish,1000).unref();
+export function snapshot() { return {status, events:feed.slice(-50).reverse(), moments:recentMoments(), simulated:process.env.DEMO === '1',playback:playbackState()}; }
 export function listen(listener:(data:unknown)=>void):()=>void { listeners.add(listener); listener(snapshot()); return ()=>listeners.delete(listener); }
 export function addEvent(e:NormalizedEvent): void { if (!recordEvent(e)) return; ingestMomentEvent(e); feed.push(e); if (feed.length>50) feed.shift(); publish(); }
 export async function startEventSub(): Promise<void> {
