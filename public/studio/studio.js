@@ -31,6 +31,7 @@ $('#build').onclick=async()=>{try{const result=await request('/api/episodes/buil
 let previewController;
 $('#preview').onclick=()=>{if(!episode.moments.length){say('Add a moment first.');return}previewController=new AbortController();$('#preview-dialog').showModal();window.playEpisode($('#preview-stage'),episode,previewController.signal).catch(()=>say('Preview could not play.'))};
 $('#close-preview').onclick=()=>$('#preview-dialog').close();$('#preview-dialog').onclose=()=>{previewController?.abort();$('#preview-stage').replaceChildren()};
-$('#play').onclick=async()=>{try{await request('/api/playback/play',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id:episode.id})});say('Playback started on the overlay.')}catch{say('Could not start playback. Save an episode with at least one moment.')}};
-$('#stop').onclick=async()=>{try{await request('/api/playback/stop',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'});say('Playback stopped.')}catch{say('Could not stop playback.')}};
+let playCountdown;
+$('#play').onclick=()=>{clearTimeout(playCountdown);const id=episode.id;let seconds=8;const tick=()=>{say('Starting in '+seconds+' seconds. Switch to OBS now.');if(seconds-- > 0){playCountdown=setTimeout(tick,1000);return}playCountdown=undefined;request('/api/playback/play',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id})}).then(()=>say('Playback started on the overlay.')).catch(()=>say('Could not start playback. Save an episode with at least one moment.'));};tick();};
+$('#stop').onclick=async()=>{clearTimeout(playCountdown);playCountdown=undefined;try{await request('/api/playback/stop',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'});say('Playback stopped.')}catch{say('Could not stop playback.')}};
 list().catch(()=>say('Could not load Studio.'));
